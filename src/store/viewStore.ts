@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 type ViewMode = '2d' | '3d' | 'split';
-type GridType = 'cartesian' | 'polar';
+type GridType = 'cartesian' | 'polar' | 'spherical';
 export type SidebarTab = 'browse' | 'compose' | 'sigma' | 'transform';
 export type ActivePanel = null | 'history' | 'export' | 'guided';
 

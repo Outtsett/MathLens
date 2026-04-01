@@ -75,12 +75,16 @@ export default function Toolbar() {
 
       {/* Right: Grid toggle, Algebra panel, Settings */}
       <div className="flex items-center gap-1">
-        {/* Grid type toggle */}
+        {/* Grid type cycle: cartesian → polar → spherical */}
         <button
-          onClick={() => setGridType(gridType === 'cartesian' ? 'polar' : 'cartesian')}
+          onClick={() => {
+            const cycle: Array<'cartesian' | 'polar' | 'spherical'> = ['cartesian', 'polar', 'spherical'];
+            const idx = cycle.indexOf(gridType);
+            setGridType(cycle[(idx + 1) % cycle.length]);
+          }}
           className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs transition-colors duration-200 hover:bg-white/10"
           style={{ color: 'var(--text-secondary)' }}
-          title={`Switch to ${gridType === 'cartesian' ? 'polar' : 'cartesian'} grid`}
+          title={`Grid: ${gridType} (click to cycle)`}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2">
             {gridType === 'cartesian' ? (
@@ -89,17 +93,24 @@ export default function Toolbar() {
                 <path d="M7 1v12M1 7h12" />
                 <path d="M1 1v12h12" opacity="0.3" />
               </>
-            ) : (
+            ) : gridType === 'polar' ? (
               // Polar grid icon
               <>
                 <circle cx="7" cy="7" r="3" />
                 <circle cx="7" cy="7" r="6" />
                 <path d="M7 1v12M1 7h12" />
               </>
+            ) : (
+              // Spherical grid icon
+              <>
+                <circle cx="7" cy="7" r="6" />
+                <ellipse cx="7" cy="7" rx="3" ry="6" />
+                <path d="M1 7h12" />
+              </>
             )}
           </svg>
           <span className="hidden sm:inline">
-            {gridType === 'cartesian' ? 'XY' : 'Polar'}
+            {gridType === 'cartesian' ? 'XY' : gridType === 'polar' ? 'Polar' : 'Sphere'}
           </span>
         </button>
 

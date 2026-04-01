@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { compile, type EvalFunction } from 'mathjs';
 import { useFunctionStore } from '../store/functionStore';
 import { useViewStore } from '../store/viewStore';
+import SphericalGrid from './grids/SphericalGrid';
 import type { MathFunction } from '../types/function';
 
 /* ------------------------------------------------------------------ */
@@ -374,6 +375,7 @@ function Scene({ functions3D, wireframe, resetTrigger, onHover }: SceneProps) {
   const xMax = useViewStore((s) => s.xMax);
   const yMin = useViewStore((s) => s.yMin);
   const yMax = useViewStore((s) => s.yMax);
+  const gridType = useViewStore((s) => s.gridType);
 
   return (
     <>
@@ -401,6 +403,9 @@ function Scene({ functions3D, wireframe, resetTrigger, onHover }: SceneProps) {
         fadeStrength={1.5}
         infiniteGrid
       />
+
+      {/* Spherical grid (when active) */}
+      {gridType === 'spherical' && <SphericalGrid />}
 
       {/* Axis lines & labels */}
       <AxisLines />
