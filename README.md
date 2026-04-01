@@ -17,6 +17,8 @@ Built for people who learn by *seeing* how functions behave, not by writing equa
 - **Σ Sigma Explorer** — Visualize 6 series types with animated bar charts, partial sums, and convergence.
 - **🔄 Transform Controls** — Apply shift, scale, and reflection transforms with instant LaTeX preview.
 - **📊 2D / 3D / Split View** — Mafs for 2D SVG plots, Three.js for 3D WebGL, or side-by-side.
+- **🌐 Grid Types** — Cartesian, polar, and spherical coordinate grids. Cycle with toolbar button.
+- **🎯 Parametric Curves** — Animate parametric curves (Lissajous, spirals, roses, butterfly) with trace dots and velocity vectors.
 - **🌙 Dark Theme** — Purpose-built dark UI with indigo accents.
 - **📜 History & Export** — Track expression history, export as SVG/PNG/LaTeX.
 - **🎓 Guided Explorations** — Step-by-step walkthroughs for discovering math concepts visually.

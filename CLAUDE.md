@@ -39,11 +39,14 @@ src/
 ├── canvas/                    # Rendering
 │   ├── Canvas2D.tsx           # Mafs 2D canvas with ResizeObserver full-height
 │   ├── Canvas2DWrapper.tsx    # Wrapper for 2D canvas context
-│   ├── Canvas3D.tsx           # Three.js 3D canvas
+│   ├── Canvas3D.tsx           # Three.js 3D canvas + spherical grid support
+│   ├── ParametricPlot2D.tsx   # Mafs parametric curve (x(t), y(t)) with trace
+│   ├── ParametricPlot3D.tsx   # Three.js 3D parametric curve with trace
 │   ├── controls/
 │   │   └── ViewControls.tsx   # Pan/zoom controls
 │   ├── grids/
-│   │   └── PolarGrid.tsx      # Polar coordinate grid overlay
+│   │   ├── PolarGrid.tsx      # Polar coordinate grid overlay
+│   │   └── SphericalGrid.tsx  # Spherical lat/lon grid for 3D (ρ=f(θ,φ))
 │   └── layers/                # (empty — future layer system)
 │
 ├── composer/                  # Function browsing & composition
@@ -64,9 +67,10 @@ src/
 │
 ├── store/                     # Zustand state management
 │   ├── functionStore.ts       # Active functions, params, selection, colors
-│   ├── viewStore.ts           # View mode, grid, viewport, sidebar tab, panels
+│   ├── viewStore.ts           # View mode, grid (cartesian/polar/spherical), sidebar tab, panels
 │   ├── animStore.ts           # Animation state (playing, speed, time)
-│   └── historyStore.ts        # Expression history tracking
+│   ├── historyStore.ts        # Expression history tracking
+│   └── parametricStore.ts     # Parametric curve state (x(t), y(t), z(t), presets)
 │
 ├── ui/                        # Layout & panels
 │   ├── Layout.tsx             # Main layout: toolbar + sidebar (4 tabs) + canvas + overlays
@@ -122,6 +126,11 @@ User clicks preset card → functionStore.addFunction()
 - `3d` — Three.js WebGL canvas
 - `split` — Side-by-side 2D + 3D
 
+### Grid Types (viewStore.gridType)
+- `cartesian` — Standard XY grid (default)
+- `polar` — Polar coordinate grid
+- `spherical` — Spherical lat/lon grid (3D only)
+
 ### Function Categories (22 presets)
 trigonometric | polynomial | exponential | special | statistical | piecewise
 
@@ -149,6 +158,4 @@ Defined in `:root` in `index.css`. All components reference CSS vars (`--bg-prim
 
 ## Remaining Work
 
-- **Spherical coordinate grid** — 3D grid type in canvas/grids/
-- **Parametric curve animation** — Animated parameter sweeps for visualizing curve families
 - **Code-splitting** — Dynamic imports for heavy components (SigmaNotation, GuidedExplorations, Canvas3D)
