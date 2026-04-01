@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useViewStore } from '../store/viewStore';
+import type { ActivePanel } from '../store/viewStore';
 
 type ViewMode = '2d' | '3d' | 'split';
 
@@ -18,6 +19,8 @@ export default function Toolbar() {
   const toggleAlgebraPanel = useViewStore((s) => s.toggleAlgebraPanel);
   const toggleSidebar = useViewStore((s) => s.toggleSidebar);
   const sidebarOpen = useViewStore((s) => s.sidebarOpen);
+  const activePanel = useViewStore((s) => s.activePanel);
+  const setActivePanel = useViewStore((s) => s.setActivePanel);
 
   return (
     <div
@@ -103,6 +106,52 @@ export default function Toolbar() {
         {/* Divider */}
         <div className="mx-1 h-5 w-px" style={{ background: 'var(--border)' }} />
 
+        {/* History panel toggle */}
+        <PanelToggle
+          panel="history"
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
+          title="History"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          }
+        />
+
+        {/* Export panel toggle */}
+        <PanelToggle
+          panel="export"
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
+          title="Export & Share"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          }
+        />
+
+        {/* Guided explorations toggle */}
+        <PanelToggle
+          panel="guided"
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
+          title="Guided Explorations"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+          }
+        />
+
+        {/* Divider */}
+        <div className="mx-1 h-5 w-px" style={{ background: 'var(--border)' }} />
+
         {/* Algebra panel toggle */}
         <button
           onClick={toggleAlgebraPanel}
@@ -132,5 +181,35 @@ export default function Toolbar() {
         </button>
       </div>
     </div>
+  );
+}
+
+function PanelToggle({
+  panel,
+  activePanel,
+  setActivePanel,
+  title,
+  icon,
+}: {
+  panel: ActivePanel;
+  activePanel: ActivePanel;
+  setActivePanel: (p: ActivePanel) => void;
+  title: string;
+  icon: React.ReactNode;
+}) {
+  const isActive = activePanel === panel;
+  return (
+    <button
+      onClick={() => setActivePanel(panel)}
+      className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs transition-colors duration-200"
+      style={{
+        background: isActive ? 'var(--accent)' : 'transparent',
+        color: isActive ? '#fff' : 'var(--text-secondary)',
+      }}
+      title={title}
+    >
+      {icon}
+      <span className="hidden sm:inline">{title}</span>
+    </button>
   );
 }

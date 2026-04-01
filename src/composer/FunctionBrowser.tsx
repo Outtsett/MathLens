@@ -1,27 +1,244 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { InlineMath } from 'react-katex';
+import { compile } from 'mathjs';
 import { getPresets } from '../engine/presets';
 import { useFunctionStore } from '../store/functionStore';
-import type { FunctionCategory } from '../types/function';
+import type { FunctionCategory, FunctionParam } from '../types/function';
 
-const CATEGORY_LABELS: Record<FunctionCategory, string> = {
-  trigonometric: '🌊 Trig',
-  polynomial: '📐 Polynomial',
-  exponential: '📈 Exponential',
-  special: '✨ Special',
-  statistical: '📊 Statistical',
-  piecewise: '🧩 Piecewise',
+// ── Category config ──────────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<FunctionCategory, { label: string; icon: string }> = {
+  trigonometric: { label: 'Trig', icon: '🌊' },
+  polynomial: { label: 'Poly', icon: '📐' },
+  exponential: { label: 'Exp', icon: '📈' },
+  special: { label: 'Special', icon: '✨' },
+  statistical: { label: 'Stats', icon: '📊' },
+  piecewise: { label: 'Pieces', icon: '🧩' },
 };
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as FunctionCategory[];
 
+// Brief one-line descriptions for common presets (keyed by name)
+const DESCRIPTIONS: Record<string, string> = {
+  'Sine Wave': 'Classic oscillating wave',
+  'Cosine Wave': 'Phase-shifted sinusoid',
+  'Tangent': 'Periodic with asymptotes',
+  'Secant': 'Reciprocal of cosine',
+  'Cosecant': 'Reciprocal of sine',
+  'Cotangent': 'Reciprocal of tangent',
+  'Arcsin': 'Inverse sine function',
+  'Arccos': 'Inverse cosine function',
+  'Arctan': 'Smooth S-shaped curve',
+  'Hyperbolic Sine': 'Exponential-based curve',
+  'Linear': 'Straight line',
+  'Quadratic': 'Parabolic curve',
+  'Cubic': 'S-shaped polynomial',
+  'Quartic': 'Double-well potential',
+  'Absolute Value': 'V-shaped graph',
+  'Exponential': 'Rapid growth/decay',
+  'Natural Log': 'Slowly increasing curve',
+  'Power Function': 'Variable exponent',
+  'Gaussian Decay': 'Bell-shaped falloff',
+  'Log Base 10': 'Common logarithm',
+  'Reciprocal': 'Hyperbola with asymptotes',
+  'Square Root': 'Half parabola, sideways',
+  'Sinc Function': 'Dampened oscillation',
+  'Step Function': 'Discontinuous jump',
+  'Floor Function': 'Staircase pattern',
+  'Gaussian': 'Normal distribution bell',
+  'Sigmoid': 'S-shaped logistic curve',
+  'Logistic Growth': 'Population growth model',
+  'Laplace Distribution': 'Sharp-peaked distribution',
+  'Cauchy Distribution': 'Heavy-tailed distribution',
+  'Damped Sine': 'Decaying oscillation',
+  'Sawtooth': 'Repeating ramp wave',
+  'Triangle Wave': 'Symmetric zigzag',
+};
+
+// ── Thumbnail component ──────────────────────────────────────────────────────
+
+function FunctionThumbnail({
+  expression,
+  params,
+}: {
+  expression: string;
+  params: FunctionParam[];
+}) {
+  const pathData = useMemo(() => {
+    try {
+      const compiled = compile(expression);
+      const scope: Record<string, number> = {};
+      for (const p of params) scope[p.name] = p.value;
+
+      const segments: string[] = [];
+      const steps = 48;
+      const xSpan = 6; // -3 to 3
+      let needsMove = true;
+
+      for (let i = 0; i <= steps; i++) {
+        const x = -3 + (xSpan * i) / steps;
+        scope.x = x;
+        let y: number;
+        try {
+          y = compiled.evaluate({ ...scope }) as number;
+        } catch {
+          needsMove = true;
+          continue;
+        }
+        if (typeof y !== 'number' || !isFinite(y) || Math.abs(y) > 50) {
+          needsMove = true;
+          continue;
+        }
+        const clamped = Math.max(-3, Math.min(3, y));
+        const svgX = ((x + 3) / xSpan) * 80;
+        const svgY = 40 - ((clamped + 3) / xSpan) * 40;
+        segments.push(
+          `${needsMove ? 'M' : 'L'} ${svgX.toFixed(1)} ${svgY.toFixed(1)}`,
+        );
+        needsMove = false;
+      }
+      return segments.join(' ');
+    } catch {
+      return '';
+    }
+  }, [expression, params]);
+
+  return (
+    <svg
+      viewBox="0 0 80 40"
+      className="h-10 w-full"
+      preserveAspectRatio="none"
+    >
+      <line
+        x1="0" y1="20" x2="80" y2="20"
+        stroke="var(--border)" strokeWidth="0.5" opacity="0.4"
+      />
+      <line
+        x1="40" y1="0" x2="40" y2="40"
+        stroke="var(--border)" strokeWidth="0.5" opacity="0.4"
+      />
+      {pathData && (
+        <path
+          d={pathData}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.85"
+        />
+      )}
+    </svg>
+  );
+}
+
+// ── Category tab ─────────────────────────────────────────────────────────────
+
+function CategoryTab({
+  category,
+  isActive,
+  onClick,
+}: {
+  category: FunctionCategory;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const { label, icon } = CATEGORY_LABELS[category];
+  return (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="rounded-md px-2 py-1 text-[11px] font-medium transition-colors duration-150"
+      style={{
+        background: isActive ? 'var(--accent)' : 'var(--bg-tertiary)',
+        color: isActive ? '#fff' : 'var(--text-secondary)',
+        border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
+      }}
+    >
+      {icon} {label}
+    </motion.button>
+  );
+}
+
+// ── Function card ────────────────────────────────────────────────────────────
+
+function FunctionCard({
+  preset,
+  onAdd,
+}: {
+  preset: { name: string; expression: string; latex: string; params: FunctionParam[] };
+  onAdd: () => void;
+}) {
+  const description = DESCRIPTIONS[preset.name] ?? '';
+
+  return (
+    <motion.button
+      whileHover={{
+        scale: 1.03,
+        boxShadow: '0 0 18px rgba(99, 102, 241, 0.25)',
+      }}
+      whileTap={{ scale: 0.96, opacity: 0.85 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+      onClick={onAdd}
+      className="flex flex-col gap-1.5 rounded-lg p-2.5 text-left transition-colors"
+      style={{
+        background: 'var(--bg-tertiary)',
+        border: '1px solid var(--border)',
+      }}
+    >
+      {/* SVG thumbnail */}
+      <div
+        className="w-full overflow-hidden rounded"
+        style={{ background: 'var(--bg-primary)' }}
+      >
+        <FunctionThumbnail
+          expression={preset.expression}
+          params={preset.params}
+        />
+      </div>
+
+      {/* Function name */}
+      <span
+        className="text-[11px] font-semibold leading-tight"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        {preset.name}
+      </span>
+
+      {/* LaTeX expression */}
+      <span
+        className="katex-card truncate text-[10px] leading-tight"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        <InlineMath math={preset.latex} />
+      </span>
+
+      {/* Brief description */}
+      {description && (
+        <span
+          className="text-[9px] leading-tight"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {description}
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
+// ── Main FunctionBrowser ─────────────────────────────────────────────────────
+
 export default function FunctionBrowser() {
-  const [activeCategory, setActiveCategory] = useState<FunctionCategory>('trigonometric');
+  const [activeCategory, setActiveCategory] =
+    useState<FunctionCategory>('trigonometric');
   const addFunction = useFunctionStore((s) => s.addFunction);
   const presets = useMemo(() => getPresets(), []);
 
-  const handleAdd = (preset: (typeof presets)[FunctionCategory][number]) => {
+  const categoryPresets = presets[activeCategory] ?? [];
+
+  const handleAdd = (preset: (typeof categoryPresets)[number]) => {
     addFunction({
       name: preset.name,
       expression: preset.expression,
@@ -44,42 +261,23 @@ export default function FunctionBrowser() {
       {/* Category tabs */}
       <div className="mb-3 flex flex-wrap gap-1">
         {CATEGORIES.map((cat) => (
-          <button
+          <CategoryTab
             key={cat}
+            category={cat}
+            isActive={activeCategory === cat}
             onClick={() => setActiveCategory(cat)}
-            className="rounded-md px-2 py-1 text-xs transition-all"
-            style={{
-              background: activeCategory === cat ? 'var(--accent)' : 'var(--bg-tertiary)',
-              color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-              border: `1px solid ${activeCategory === cat ? 'var(--accent)' : 'var(--border)'}`,
-            }}
-          >
-            {CATEGORY_LABELS[cat]}
-          </button>
+          />
         ))}
       </div>
 
-      {/* Function cards */}
+      {/* Function cards — 2 column grid */}
       <div className="grid grid-cols-2 gap-2">
-        {(presets[activeCategory] ?? []).map((preset, i) => (
-          <motion.button
+        {categoryPresets.map((preset, i) => (
+          <FunctionCard
             key={`${activeCategory}-${i}`}
-            whileHover={{ scale: 1.03, boxShadow: '0 0 12px rgba(99,102,241,0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleAdd(preset)}
-            className="flex flex-col items-start gap-1 rounded-lg p-3 text-left transition-colors"
-            style={{
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
-              {preset.name}
-            </span>
-            <span className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>
-              <InlineMath math={preset.latex} />
-            </span>
-          </motion.button>
+            preset={preset}
+            onAdd={() => handleAdd(preset)}
+          />
         ))}
       </div>
     </div>
