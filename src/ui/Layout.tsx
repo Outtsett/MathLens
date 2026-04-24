@@ -8,6 +8,7 @@ import SnapBlocks from '../composer/SnapBlocks';
 import FunctionCombiner from '../composer/FunctionCombiner';
 import SigmaNotation from '../composer/SigmaNotation';
 import TransformControls from '../composer/TransformControls';
+import ParametricAnimator from '../composer/ParametricAnimator';
 import Canvas2D from '../canvas/Canvas2D';
 import Canvas3D from '../canvas/Canvas3D';
 import ParamSliders from '../composer/ParamSliders';
@@ -22,6 +23,7 @@ const SIDEBAR_TABS: { key: SidebarTab; label: string }[] = [
   { key: 'compose', label: 'Compose' },
   { key: 'sigma', label: 'Σ' },
   { key: 'transform', label: 'Transform' },
+  { key: 'parametric', label: 'P(t)' },
 ];
 
 // ── Sidebar edge toggle (visible when sidebar is open) ───────────────────────
@@ -138,6 +140,7 @@ export default function Layout() {
                   )}
                   {sidebarTab === 'sigma' && <SigmaNotation />}
                   {sidebarTab === 'transform' && <TransformControls />}
+                  {sidebarTab === 'parametric' && <ParametricAnimator />}
                 </div>
               </div>
 

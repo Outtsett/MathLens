@@ -3,6 +3,9 @@ import { Mafs, Coordinates, Plot } from 'mafs';
 import { compile } from 'mathjs';
 import { useFunctionStore } from '../store/functionStore';
 import { useViewStore } from '../store/viewStore';
+import { useParametricStore } from '../store/parametricStore';
+import { useAnimStore } from '../store/animStore';
+import ParametricPlot2D from './ParametricPlot2D';
 import type { MathFunction } from '../types/function';
 
 /**
@@ -104,6 +107,11 @@ export default function Canvas2D() {
   const yMin = useViewStore((s) => s.yMin);
   const yMax = useViewStore((s) => s.yMax);
 
+  // Parametric state
+  const parametricCurves = useParametricStore((s) => s.curves);
+  const animProgress = useAnimStore((s) => s.progress);
+  const animationType = useAnimStore((s) => s.animationType);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
 
@@ -135,6 +143,10 @@ export default function Canvas2D() {
   const visibleFns = functions.filter(
     (fn) => fn.visible && fn.dimension === '2d',
   );
+
+  // 2D parametric curves (no zExpr)
+  const parametric2D = parametricCurves.filter((c) => !c.zExpr);
+  const isParametricMode = animationType === 'parametric';
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden">
@@ -180,10 +192,35 @@ export default function Canvas2D() {
             />
           );
         })}
+
+        {/* Parametric curves */}
+        {parametric2D.map((curve) => {
+          const paramRecord: Record<string, number> = {};
+          curve.params.forEach((p) => {
+            paramRecord[p.name] = p.value;
+          });
+
+          return (
+            <ParametricPlot2D
+              key={curve.id}
+              xExpr={curve.xExpr}
+              yExpr={curve.yExpr}
+              tRange={[curve.tMin, curve.tMax]}
+              params={paramRecord}
+              color={curve.color}
+              traceT={
+                curve.showTrace && isParametricMode
+                  ? animProgress
+                  : undefined
+              }
+              showVelocity={curve.showVelocity && isParametricMode}
+            />
+          );
+        })}
       </Mafs>
 
       {/* Empty state overlay */}
-      {visibleFns.length === 0 && (
+      {visibleFns.length === 0 && parametric2D.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
           <div
             className="rounded-lg px-6 py-4 text-center backdrop-blur-sm"
